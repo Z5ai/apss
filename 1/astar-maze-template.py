@@ -74,15 +74,15 @@ def manhattanheuristic(node_a, node_b):
 
 ###################################################
 # maze looks like: [['W', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'C'], ['E', 'W', 'E', 'E', 'E', 'E', 'E', 'E', '
-# access maze like: maze[x][y] -> x for row and y for column
+# access maze like: maze[x][y] -> x for row(top to bottom) and y for column(left to right)
 def astar_search(maze, heuristic=manhattanheuristic):
     '''
     :param maze: a two-dim array containing the characters as in the maze file.
     :param heuristic: a function that takes two coordinate pairs and returns an approx. distance
     :return: shortest path found ...list of coord. pairs
     '''
-    start_coord = (0, 0)
-    goal_coord = (len(maze) - 1, len(maze[0]) - 1)
+    start_coord = (9, 0)
+    goal_coord = (0, len(maze[0]) - 1)
     start_g = 0
     start_h = manhattanheuristic(start_coord, goal_coord)
     start_f = start_g + start_h
@@ -90,19 +90,27 @@ def astar_search(maze, heuristic=manhattanheuristic):
 
     queue = [start_node]
     origins = {}
+    visited = []
 
     while queue:
+
         n = queue.pop(0)
         n_coord = n.coord
+        visited.append(n_coord)
+
         if n_coord == goal_coord:
             break
+
         nn_coord_list = neighbors(n_coord, maze)
         for nn_coord in nn_coord_list:
-            if nn_coord not in origins.keys():
+            if nn_coord not in visited:
                 origins[nn_coord] = n_coord
+
                 nn_g = n.g + 1
-                nn_h = heuristic(n_coord, goal_coord)
+                nn_h = heuristic(nn_coord, goal_coord)
                 nn_f = nn_g + nn_h
+
+                visited.append(nn_coord)
                 queue.append(Node.Node(nn_coord, nn_g, nn_f))
         queue = sorted(queue)
 
@@ -122,10 +130,8 @@ def main():
 
     # 1. load the maze
     maze = load_maze_file(args.mazefile)
-
     # 2. call AStar with different heuristics to see the effects ;)
     shortest_path = astar_search(maze, heuristic=manhattanheuristic)
-
     print("Path:")
     print(shortest_path)
 
