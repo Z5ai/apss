@@ -110,7 +110,11 @@ def astar_search(maze, heuristic=manhattanheuristic):
                 nn_h = heuristic(nn_coord, goal_coord)
                 nn_f = nn_g + nn_h
 
+                # visiting occurs, before node is appended to queue (node should never be put into queue a second time).
+                # dass der besuchte node noch von einer anderen Seite aus mit einem niedrigerem g-Wert gefunden wird, ist aufgrund
+                # der zulässigen heuristik unmöglich. Somit ist es okay, wenn wir den Node höchstens einmal in die queue aufnehmen.
                 visited.append(nn_coord)
+
                 queue.append(Node.Node(nn_coord, nn_g, nn_f))
         queue = sorted(queue)
 
