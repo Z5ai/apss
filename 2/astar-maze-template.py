@@ -3,8 +3,16 @@ import argparse as ap
 import math
 import heapq as hq
 import io
+from enum import Enum
+
 import Node
 
+
+class Direction(Enum):
+    UP = 1
+    DOWN = 2
+    LEFT = 3
+    RIGHT = 4
 
 def load_maze_file(maze_filename):
     '''
@@ -20,7 +28,6 @@ def load_maze_file(maze_filename):
                 maze.append(row.strip().split(sep=','))
 
     return maze
-
 
 
 
@@ -51,7 +58,7 @@ def neighbors(node, maze):
 
 def reconstruct_path(origins, node):
     '''
-    Starting from node, reconstruct the chosen path 
+    Starting from node, reconstruct the chosen path
     :param origins: a dict that stores for each node, the node from which it has been reached
     :param node: the node from which the path shall be reconstructed (endnode)
     '''
@@ -65,60 +72,79 @@ def reconstruct_path(origins, node):
 
     return path
 
-################################################### a function that takes two corrdinate pairs and returns an approx. distance
-def manhattanheuristic(node_a, node_b):
-    (x, y) = node_a
-    (u, v) = node_b
-    return abs(u-x) + abs(v-y)
+
+
+def dfs(maze):
+    start_coord = (len(maze)-1, 0)
+    goal_coord = (0, len(maze[0]) - 1)
+
+    queue = [start_coord]
+    visited = [start_coord]
+    origins = {}
+
+    while queue:
+        n = queue.pop()
+        if n == goal_coord:
+            return reconstruct_path(origins, goal_coord)
+        nn_list = neighbors(n, maze)
+        for nn in nn_list:
+            if nn not in visited:
+                visited.append(nn)
+                origins[nn] = n
+                queue.append(nn)
+
+
+def get_direction(coord_old, coord):
+    (x, y) = coord_old
+    (x2, y2) = coord
+
+    if x2 - x == 1:
+        return Direction.DOWN
+    elif x2 - x == -1:
+        return Direction.UP
+    elif y2 - y == 1:
+        return Direction.RIGHT
+    elif y2 - y == -1:
+        return Direction.LEFT
+
+
+def reduce_path_to_corner_coord(path):
+    n_old = path.pop(0)
+    path_corner_coord = [n_old]
+    n = path.pop(0)
+    direction_old = get_direction(n_old, n)
+    n_old = n   # direction_old is now the direction to n_old
+
+    while len(path) != 1:
+        n = path.pop(0)
+        direction = get_direction(n_old, n)  # direction is now the direction to n
+
+        if direction != direction_old:
+            path_corner_coord.append(n_old)
+
+        direction_old = direction
+        n_old = n                           # direction_old is now the direction to n_old
+
+    path_corner_coord.append(path[0])
+    return path_corner_coord
+
+
+def improve(initial_path):
+
 
 
 ###################################################
 # maze looks like: [['W', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'C'], ['E', 'W', 'E', 'E', 'E', 'E', 'E', 'E', '
 # access maze like: maze[x][y] -> x for row(top to bottom) and y for column(left to right)
-def astar_search(maze, heuristic=manhattanheuristic):
+def simulated_annealing(maze):
     '''
     :param maze: a two-dim array containing the characters as in the maze file.
-    :param heuristic: a function that takes two coordinate pairs and returns an approx. distance
     :return: shortest path found ...list of coord. pairs
     '''
-    start_coord = (len(maze)-1, 0)
-    goal_coord = (0, len(maze[0]) - 1)
-    start_g = 0
-    start_h = manhattanheuristic(start_coord, goal_coord)
-    start_f = start_g + start_h
-    start_node = Node.Node(start_coord, start_g, start_f)
+    initial_path = dfs(maze)
+    return improve(initial_path)
 
-    queue = [start_node]
-    origins = {}
-    visited = []
 
-    while queue:
-
-        n = queue.pop(0)
-        n_coord = n.coord
-        visited.append(n_coord)
-
-        if n_coord == goal_coord:
-            break
-
-        nn_coord_list = neighbors(n_coord, maze)
-        for nn_coord in nn_coord_list:
-            if nn_coord not in visited:
-                origins[nn_coord] = n_coord
-
-                nn_g = n.g + 1
-                nn_h = heuristic(nn_coord, goal_coord)
-                nn_f = nn_g + nn_h
-
-                # visiting occurs, before node is appended to queue (node should never be put into queue a second time).
-                # dass der besuchte node noch von einer anderen Seite aus mit einem niedrigerem g-Wert gefunden wird, ist aufgrund
-                # der zulässigen heuristik unmöglich. Somit ist es okay, wenn wir den Node höchstens einmal in die queue aufnehmen.
-                visited.append(nn_coord)
-
-                queue.append(Node.Node(nn_coord, nn_g, nn_f))
-        queue = sorted(queue)
-
-    return reconstruct_path(origins, goal_coord)
 
 
 
