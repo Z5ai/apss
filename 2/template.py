@@ -14,6 +14,7 @@ import random
 
 path = []
 paths = dict()
+T_max = 100
 
 def load_maze_file(maze_filename):
     '''
@@ -86,39 +87,49 @@ def find_initial_solution(maze, starting_node, goal_node,val):
 
 
 
-def find_neighbor:
+def find_neighbor(path):
+    # get random node from path
+    # if node is a corner
+        # fifty fifty chance if flip_corner or flip_line
 
-def eval(path):
+    # if node is not a corner
+        # flip_line (flip_corner is not possible)
+
+def eval(path, maze):
     # for each step -1 as penalty, for each wall -10 as penalty
+    penalty = 0
+    for node in path:
+        (x, y) = node
+        if maze[x][y] == 1:
+            penalty -= 10
+        else:
+            penalty -= 1
+    return penalty
 
-def g(T,t):
+
+def g(t):
+    return T_max * math.exp(-t)
 
 
 
 def sim_annealing_search(maze, starting_node, goal_node):
     '''
     :param maze: a two-dim array containing the characters as in the maze file.
-    :param heuristic: a function that takes two corrdinate pairs an returns an approx. distance
+    :param heuristic: a function that takes two corrdinate pairs and returns an approx. distance
     :return: shortest path found ...list of coord. pairs
     '''
 
-    T = 100
     find_initial_solution(maze, starting_node, goal_node, 0)
-
+    path_c = paths[0]
     # contrary to slide 44 leave green iteration out, which is just for, if you want not to decrease T in each iteration
     for t in range(1, 30):
-        path_c = paths[t-1]
-
-        while no better neighbour is found, do..., so that we get a improved soltuion for every t.
-            path_n = get_neighbor(path_c)
-            if eval(path_c) < eval(path_n):
-                paths[t] = path_n
-            .......
-        T = g(T,t)
-
-
-
-
+        T = g(t)
+        path_n = find_neighbor(path_c)
+        if eval(path_c, maze) < eval(path_n, maze):
+            path_c = path_n
+        elif random.random() < math.exp((eval(path_n)-eval(path_c))/T):
+            path_c = path_n
+        paths[t] = path_c
     viz_maze(maze,30)
     
     
