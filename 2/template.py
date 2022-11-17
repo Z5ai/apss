@@ -109,29 +109,95 @@ def check_L(three_chain):
     if xs == xm == xe or ys == ym == ye:
         return True
 
-
-
 def replace_chain(path, replacement_indexes, replacement_chain):
     start_chain = path[:replacement_indexes[0]]
     end_chain = path[replacement_indexes[-1]+1:]
     return start_chain + replacement_chain + end_chain
 
-def replacement_chain_for_three_chain(three_chain):
+def replacement_chain_for_three_chain(three_chain, path):
     [s, m, e] = three_chain
     (xs, ys) = s
     (xe, ye) = e
     m1 = (xs, ye)
     m2 = (xe, ys)
     if m == m1:
-        return [s, m2, e]
+        if m2 not in path:
+            return [s, m2, e]
     else:
-        return [s, m1, e]
+        if m1 not in path:
+            return [s, m1, e]
+    return [s, m, e]
 
-def replacement_chain_for_two_chain(two_chain):
+def replacement_chain_for_two_chain(two_chain, path, maze_size):
+    coin = random.randint(0, 1)
+    (x0, y0) = two_chain[0]
+    (x1, y1) = two_chain[1]
 
+    # segment is horizontal
+    if x1 - x0 == 0:
 
+        if x0 == 0:
+            if x0+1 not in path and x1+1 not in path:
+                return [two_chain[0], (x0+1,y0), (x1+1,y1),two_chain[1]]
+            else:
+                return two_chain
 
-def find_neighbor(path):
+        elif x0 == maze_size['x']-1:
+            if x0-1 not in path and x1-1 not in path:
+                return [two_chain[0], (x0-1,y0), (x1-1,y1),two_chain[1]]
+            else:
+                return two_chain
+
+        else:
+            match coin:
+                case 0:
+                    if x0+1 not in path and x1+1 not in path:
+                        return [two_chain[0], (x0 + 1, y0), (x1 + 1, y1), two_chain[1]]
+                    elif x0-1 not in path and x1-1 not in path:
+                        return [two_chain[0], (x0 - 1, y0), (x1 - 1, y1), two_chain[1]]
+                    else:
+                        return two_chain
+                case 1:
+                    if x0-1 not in path and x1-1 not in path:
+                        return [two_chain[0], (x0-1, y0), (x1-1, y1), two_chain[1]]
+                    elif x0+1 not in path and x1+1 not in path:
+                        return [two_chain[0], (x0+1, y0), (x1+1, y1), two_chain[1]]
+                    else:
+                        return two_chain
+
+    # segment is vertical
+    else:
+
+        if y0 == 0:
+            if y0+1 not in path and y1+1 not in path:
+                return [two_chain[0], (x0, y0+1), (x1, y1+1), two_chain[1]]
+            else:
+                return two_chain
+
+        elif y0 == maze_size['y'] - 1:
+            if y0 - 1 not in path and y1 - 1 not in path:
+                return [two_chain[0], (x0, y0-1), (x1, y1-1), two_chain[1]]
+            else:
+                return two_chain
+
+        else:
+            match coin:
+                case 0:
+                    if y0+1 not in path and y1+1 not in path:
+                        return [two_chain[0], (x0, y0+1), (x1, y1+1), two_chain[1]]
+                    elif y0-1 not in path and y1-1 not in path:
+                        return [two_chain[0], (x0, y0-1), (x1, y1-1), two_chain[1]]
+                    else:
+                        return two_chain
+                case 1:
+                    if y0-1 not in path and y1-1 not in path:
+                        return [two_chain[0], (x0, y0-1), (x1, y1-1), two_chain[1]]
+                    elif y0+1 not in path and y1+1 not in path:
+                        return [two_chain[0], (x0, y0+1), (x1, y1+1), two_chain[1]]
+                    else:
+                        return two_chain
+
+def find_neighbor(path, maze_size):
     last_index = len(path) - 1
 
     # 1. investigate four_chain
@@ -148,17 +214,16 @@ def find_neighbor(path):
     replacement_indexes = [i for i in range(index_first_three_chain, index_first_three_chain + 3)]
     three_chain = [path[index] for index in replacement_indexes]
     if check_L(three_chain) == True:
-        # boundary checking in replacement_chain_for_three_chain() required
-        replacement_chain = replacement_chain_for_three_chain(three_chain)
+        # boundary checking in replacement_chain_for_three_chain() done
+        replacement_chain = replacement_chain_for_three_chain(three_chain, path)
         return replace_chain(path, replacement_indexes, replacement_chain)
-
 
     # 3. investigate two_chain
     index_first_two_chain = index_first_four_chain + random.randint(0, 3)
     replacement_indexes = [i for i in range(index_first_three_chain, index_first_three_chain + 2)]
     two_chain = [path[index] for index in replacement_indexes]
     # boundary checking in replacement_chain_for_two_chain() required
-    replacement_chain = replacement_chain_for_two_chain(two_chain)
+    replacement_chain = replacement_chain_for_two_chain(two_chain, path, maze_size)
     return replace_chain(path, replacement_indexes, replacement_chain)
 
 def eval(path, maze):
@@ -184,13 +249,15 @@ def sim_annealing_search(maze, starting_node, goal_node):
     :param heuristic: a function that takes two corrdinate pairs and returns an approx. distance
     :return: shortest path found ...list of coord. pairs
     '''
+    maze_size = {'x':len(maze), 'y':len(maze[0])}
+
 
     find_initial_solution(maze, starting_node, goal_node, 0)
     path_c = paths[0]
     # contrary to slide 44 leave green iteration out, which is just for, if you want not to decrease T in each iteration
     for t in range(1, 30):
         T = g(t)
-        path_n = find_neighbor(path_c)
+        path_n = find_neighbor(path_c, maze_size)
         if eval(path_c, maze) < eval(path_n, maze):
             path_c = path_n
         elif random.random() < math.exp((eval(path_n)-eval(path_c))/T):
