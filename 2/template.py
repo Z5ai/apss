@@ -201,7 +201,7 @@ def find_neighbor(path, maze_size):
     last_index = len(path) - 1
 
     # 1. investigate four_chain
-    index_first_four_chain = random.randint(0, last_index - 3)
+    index_first_four_chain = random.randint(0, last_index-3)
     replacement_indexes = [i for i in range(index_first_four_chain, index_first_four_chain + 4)]
     four_chain = [path[index] for index in replacement_indexes]
     if check_U(four_chain):
@@ -210,7 +210,7 @@ def find_neighbor(path, maze_size):
         return replace_chain(path, replacement_indexes, replacement_chain)
 
     # 2. investigate three_chain
-    index_first_three_chain = index_first_four_chain + random.randint(0, 2)
+    index_first_three_chain = index_first_four_chain + random.randint(0, 1)
     replacement_indexes = [i for i in range(index_first_three_chain, index_first_three_chain + 3)]
     three_chain = [path[index] for index in replacement_indexes]
     if check_L(three_chain) == True:
@@ -219,8 +219,8 @@ def find_neighbor(path, maze_size):
         return replace_chain(path, replacement_indexes, replacement_chain)
 
     # 3. investigate two_chain
-    index_first_two_chain = index_first_four_chain + random.randint(0, 3)
-    replacement_indexes = [i for i in range(index_first_three_chain, index_first_three_chain + 2)]
+    index_first_two_chain = index_first_four_chain + random.randint(0, 2)
+    replacement_indexes = [i for i in range(index_first_two_chain, index_first_two_chain + 2)]
     two_chain = [path[index] for index in replacement_indexes]
     # boundary checking in replacement_chain_for_two_chain() required
     replacement_chain = replacement_chain_for_two_chain(two_chain, path, maze_size)
@@ -242,7 +242,6 @@ def g(t):
     return T_max * math.exp(-t)
 
 
-
 def sim_annealing_search(maze, starting_node, goal_node):
     '''
     :param maze: a two-dim array containing the characters as in the maze file.
@@ -260,18 +259,17 @@ def sim_annealing_search(maze, starting_node, goal_node):
         path_n = find_neighbor(path_c, maze_size)
         if eval(path_c, maze) < eval(path_n, maze):
             path_c = path_n
-        elif random.random() < math.exp((eval(path_n)-eval(path_c))/T):
+        elif random.random() < math.exp((eval(path_n, maze)-eval(path_c, maze))/T):
             path_c = path_n
         paths[t] = path_c
     viz_maze(maze,30)
-    
     
 def main():
     # Start from your command line:
     # C:/ProgramData/Anaconda3/python.exe "c:/Users/marcr/Desktop/Master 1/APSS/Exercises/Exercise 1/astar-maze-template.py" hard.maze
     parser = ap.ArgumentParser(description="A Maze Solver based on AStar.")
     parser.add_argument("mazefile", type=str, help="filename of the the maze file to load")
-    args = parser.parse_args(args=["medium.maze"])
+    args = parser.parse_args(args=["hard.maze"])
 
     # 1. load the maze
     maze, starting_node, goal_node = load_maze_file(args.mazefile)
@@ -282,6 +280,7 @@ def main():
 
     # 2. call simulated annealing
     sim_annealing_search(maze, starting_node, goal_node)
+    pass
 
 
 ### Encodes the maze in numeric values for display
