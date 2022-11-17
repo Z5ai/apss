@@ -85,15 +85,81 @@ def find_initial_solution(maze, starting_node, goal_node,val):
     # from timepoint val, n_path contains several solutions
     paths[val] = n_path
 
+def check_U(four_chain):
+    # x goes to bottom, y goes to right
+    (xs, ys) = four_chain[0]
+    (x1, y1) = four_chain[1]
+    (x2, y2) = four_chain[2]
+    (xe, ye) = four_chain[3]
+    # mid_segment is horizontal
+    if x2 - x1 == 0:
+        if xs == xe and ys == y1 and ye == y2:
+            return True
+    # mid_segment is vertical
+    else:
+        if ys == ye and xs == x1 and xe == x2:
+            return True
+    return False
+
+def check_L(three_chain):
+    [s, m, e] = three_chain
+    (xs, ys) = s
+    (xm, ym) = m
+    (xe, ye) = e
+    if xs == xm == xe or ys == ym == ye:
+        return True
+
+
+
+def replace_chain(path, replacement_indexes, replacement_chain):
+    start_chain = path[:replacement_indexes[0]]
+    end_chain = path[replacement_indexes[-1]+1:]
+    return start_chain + replacement_chain + end_chain
+
+def replacement_chain_for_three_chain(three_chain):
+    [s, m, e] = three_chain
+    (xs, ys) = s
+    (xe, ye) = e
+    m1 = (xs, ye)
+    m2 = (xe, ys)
+    if m == m1:
+        return [s, m2, e]
+    else:
+        return [s, m1, e]
+
+def replacement_chain_for_two_chain(two_chain):
+
 
 
 def find_neighbor(path):
-    # get random node from path
-    # if node is a corner
-        # fifty fifty chance if flip_corner or flip_line
+    last_index = len(path) - 1
 
-    # if node is not a corner
-        # flip_line (flip_corner is not possible)
+    # 1. investigate four_chain
+    index_first_four_chain = random.randint(0, last_index - 3)
+    replacement_indexes = [i for i in range(index_first_four_chain, index_first_four_chain + 4)]
+    four_chain = [path[index] for index in replacement_indexes]
+    if check_U(four_chain):
+        # no boundary checking required at all
+        replacement_chain = four_chain[1:3]
+        return replace_chain(path, replacement_indexes, replacement_chain)
+
+    # 2. investigate three_chain
+    index_first_three_chain = index_first_four_chain + random.randint(0, 2)
+    replacement_indexes = [i for i in range(index_first_three_chain, index_first_three_chain + 3)]
+    three_chain = [path[index] for index in replacement_indexes]
+    if check_L(three_chain) == True:
+        # boundary checking in replacement_chain_for_three_chain() required
+        replacement_chain = replacement_chain_for_three_chain(three_chain)
+        return replace_chain(path, replacement_indexes, replacement_chain)
+
+
+    # 3. investigate two_chain
+    index_first_two_chain = index_first_four_chain + random.randint(0, 3)
+    replacement_indexes = [i for i in range(index_first_three_chain, index_first_three_chain + 2)]
+    two_chain = [path[index] for index in replacement_indexes]
+    # boundary checking in replacement_chain_for_two_chain() required
+    replacement_chain = replacement_chain_for_two_chain(two_chain)
+    return replace_chain(path, replacement_indexes, replacement_chain)
 
 def eval(path, maze):
     # for each step -1 as penalty, for each wall -10 as penalty
